@@ -1,0 +1,23 @@
+{
+  "name": "smart-contracts",
+  "version": "1.0.0",
+  "description": "* 가장 기본적인 코인 계약   - ERC20Interface를 상속받아 구현",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://z-bsi@bitbucket.org/z-bsi/smart-contracts.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/z-bsi/smart-contracts#readme",
+  "dependencies": {
+    "openzeppelin-solidity": "1.9.0"
+  }
+}
