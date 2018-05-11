@@ -9,24 +9,32 @@ contract ProjectToken is StandardToken {
     string public name;
     string public symbol;
     uint8 public decimals = 0;
-    mapping (address => uint) public coinCashRates;
+    uint8 public beta;
+    mapping (address => uint8) public coinCashRates;
 
     mapping (address => uint) public indices;
     address[] public addresses;
 
-    constructor(address _tokenAddress, uint INITIAL_SUPPLY, string _name, string _symbol) public {
+    event InterestPaid(address indexed from, address indexed to, uint256 coinValue, uint256 cashValue);
+
+    constructor(address _tokenAddress, uint INITIAL_SUPPLY, string _name, string _symbol, uint8 _beta) public {
         totalSupply_ = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
         addresses.push(msg.sender);
         token = ZipToken(_tokenAddress);
         name = _name;
         symbol = _symbol;
+        beta = _beta;
     }
 
-    function payInterestsInToken(uint amount) public {
-        require(token.allowance(msg.sender, this) >= amount);
+    function payInterestsInToken(uint amountInCoin) public {
+        require(token.allowance(msg.sender, this) >= amountInCoin);
         for (uint i=1; i<addresses.length; i++) {
-            token.transferFrom(msg.sender, addresses[i], amount*balances[addresses[i]]*coinCashRates[addresses[i]]/totalSupply_/100);
+            uint share = amountInCoin * balances[addresses[i]];
+            uint coinValue = share * coinCashRates[addresses[i]] / totalSupply_ / 100;
+            uint cashValue = share * (100-coinCashRates[addresses[i]]) * beta / totalSupply_ / 10000;
+            token.transferFrom(msg.sender, addresses[i], coinValue);
+            emit InterestPaid(msg.sender, addresses[i], coinValue, cashValue);
         }
     }
 
@@ -38,7 +46,7 @@ contract ProjectToken is StandardToken {
         return indices[addr];
     }
 
-    function setCoinCashRate(uint percentOfCoin) public returns (bool) {
+    function setCoinCashRate(uint8 percentOfCoin) public returns (bool) {
         require(percentOfCoin >= 0 && percentOfCoin <= 100);
         coinCashRates[msg.sender] = percentOfCoin;
     }
@@ -77,7 +85,7 @@ contract ProjectToken is StandardToken {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        if (indices[_to] == 0) {
+        if (indices[_to] == 0 && _to != addresses[0]) {
             addresses.length += 1;
             addresses[addresses.length-1] = _to;
             indices[_to] = addresses.length-1;

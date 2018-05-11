@@ -8,7 +8,8 @@ contract('ProjectToken', function(accounts) {
 
     beforeEach('setup contract for each test', async function () {
         zipToken = await ZipToken.new()
-        projectToken = await ProjectToken.new(zipToken.address, 100, "Project Jacob", "J")
+        projectToken = await ProjectToken.new(zipToken.address, 100, "Project Jacob", "J", 80)
+        console.log(projectToken.address)
     })
 
     it("should put 100 ProjectToken in the first account", async function() {
@@ -23,9 +24,9 @@ contract('ProjectToken', function(accounts) {
         projectToken.setCoinCashRate(100, {from: accounts[1]});
         projectToken.setCoinCashRate(100, {from: accounts[2]});
         projectToken.setCoinCashRate(50, {from: accounts[3]});
-        projectToken.transfer(accounts[1], 50, {from: accounts[0]});
-        projectToken.transfer(accounts[2], 30, {from: accounts[0]});
-        projectToken.transfer(accounts[3], 20, {from: accounts[0]});
+        await projectToken.transfer(accounts[1], 50, {from: accounts[0]});
+        await projectToken.transfer(accounts[2], 30, {from: accounts[0]});
+        await projectToken.transfer(accounts[3], 20, {from: accounts[0]});
 
         assert.equal(await projectToken.balanceOf(accounts[1]), 50, "Account 1 should have 50 project tokens");
         assert.equal(await projectToken.balanceOf(accounts[2]), 30, "Account 2 should have 30 project tokens");
@@ -36,7 +37,14 @@ contract('ProjectToken', function(accounts) {
         assert.equal(await projectToken.getNthAddress(await projectToken.getIndex(accounts[3])), accounts[3], "Indexing should work correctly");
 
         await zipToken.approve(projectToken.address, 100, {from: accounts[0]});
-        await projectToken.payInterestsInToken(100, {from: accounts[0]});
+        await projectToken.payInterestsInToken(100, {from: accounts[0]}).then(function(result) {
+            assert.equal(result.logs[1]['args']['coinValue'], 50);
+            assert.equal(result.logs[1]['args']['cashValue'], 0);
+            assert.equal(result.logs[3]['args']['coinValue'], 30);
+            assert.equal(result.logs[3]['args']['cashValue'], 0);
+            assert.equal(result.logs[5]['args']['coinValue'], 10);
+            assert.equal(result.logs[5]['args']['cashValue'], 8);
+        });
         assert.equal(await zipToken.balanceOf(accounts[1]), 50, "Account 1 must have received 50 ZIP as interests");
         assert.equal(await zipToken.balanceOf(accounts[2]), 30, "Account 2 must have received 30 ZIP as interests");
         assert.equal(await zipToken.balanceOf(accounts[3]), 10, "Account 3 must have received 10 ZIP as interests");
