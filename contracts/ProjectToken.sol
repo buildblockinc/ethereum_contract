@@ -16,6 +16,7 @@ contract ProjectToken is StandardToken {
     address[] public addresses;
 
     event InterestPaid(address indexed from, address indexed to, uint256 coinValue, uint256 cashValue);
+    event CoinCashRateChanged(address indexed from, uint8 rate);
 
     constructor(address _tokenAddress, uint INITIAL_SUPPLY, string _name, string _symbol, uint8 _beta) public {
         totalSupply_ = INITIAL_SUPPLY;
@@ -49,6 +50,7 @@ contract ProjectToken is StandardToken {
     function setCoinCashRate(uint8 percentOfCoin) public returns (bool) {
         require(percentOfCoin >= 0 && percentOfCoin <= 100);
         coinCashRates[msg.sender] = percentOfCoin;
+        emit CoinCashRateChanged(msg.sender, percentOfCoin);
     }
 
   /**
