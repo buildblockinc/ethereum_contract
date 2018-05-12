@@ -1,6 +1,10 @@
 var ProjectToken = artifacts.require("ProjectToken");
 var ZipToken = artifacts.require("ZipToken");
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 contract('ProjectToken', function(accounts) {
 
     let projectToken
@@ -46,7 +50,7 @@ contract('ProjectToken', function(accounts) {
             console.error("setSuspension function should be called by the owner!");
         }
 
-        await projectToken.setSuspension(10, {from: accounts[0]});
+        await projectToken.setSuspension(1, {from: accounts[0]});
         try {
             await projectToken.setCoinCashRate(50, {from: accounts[1]});;
         } catch (err) {
@@ -65,10 +69,15 @@ contract('ProjectToken', function(accounts) {
             console.log(result.logs[1]['args']);
         });
 
-
         assert.equal(await zipToken.balanceOf(accounts[1]), 50, "Account 1 must have received 50 ZIP as interests");
         assert.equal(await zipToken.balanceOf(accounts[2]), 30, "Account 2 must have received 30 ZIP as interests");
         assert.equal(await zipToken.balanceOf(accounts[3]), 10, "Account 3 must have received 10 ZIP as interests");
+
+        await sleep(2000);
+        await projectToken.transfer(accounts[4], 20, {from: accounts[1]});
+
+        assert.equal(await projectToken.balanceOf(accounts[4]), 20, "After suspension, we should be able to transfer tokens again.");
+
     })
 
 });
