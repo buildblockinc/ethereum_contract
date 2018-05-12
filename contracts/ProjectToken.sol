@@ -1,9 +1,10 @@
 pragma solidity ^0.4.23;
 
 import "../openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "../openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./ZipToken.sol";
 
-contract ProjectToken is StandardToken {
+contract ProjectToken is StandardToken, Ownable {
 
     ZipToken public token;
     string public name;
@@ -12,10 +13,13 @@ contract ProjectToken is StandardToken {
     uint8 public beta;
     mapping (address => uint8) public coinCashRates;
 
+    uint public suspendDurationInSeconds = 0;
+    uint public suspendStart = 0;
+
     mapping (address => uint) public indices;
     address[] public addresses;
 
-    event InterestPaid(address indexed from, address indexed to, uint256 coinValue, uint256 cashValue);
+    event InterestPaid(address indexed from, address indexed to, uint coinValue, uint cashValue, uint price, uint when);
     event CoinCashRateChanged(address indexed from, uint8 rate);
 
     constructor(address _tokenAddress, uint INITIAL_SUPPLY, string _name, string _symbol, uint8 _beta) public {
@@ -28,14 +32,30 @@ contract ProjectToken is StandardToken {
         beta = _beta;
     }
 
-    function payInterestsInToken(uint amountInCoin) public {
+    function setSuspension(uint durationInSeconds) public onlyOwner {
+        suspendDurationInSeconds = durationInSeconds;
+        suspendStart = now;
+    }
+
+    modifier notSuspended() {
+        require(now > suspendStart + suspendDurationInSeconds);
+        _;
+    }
+
+    modifier suspended() {
+        require(now <= suspendStart + suspendDurationInSeconds);
+        _;
+    }
+
+    function payInterestsInToken(uint amountInCoin, uint coinPrice) public suspended {
         require(token.allowance(msg.sender, this) >= amountInCoin);
+        uint when = now;
         for (uint i=1; i<addresses.length; i++) {
             uint share = amountInCoin * balances[addresses[i]];
             uint coinValue = share * coinCashRates[addresses[i]] / totalSupply_ / 100;
             uint cashValue = share * (100-coinCashRates[addresses[i]]) * beta / totalSupply_ / 10000;
             token.transferFrom(msg.sender, addresses[i], coinValue);
-            emit InterestPaid(msg.sender, addresses[i], coinValue, cashValue);
+            emit InterestPaid(msg.sender, addresses[i], coinValue, cashValue, coinPrice, when);
         }
     }
 
@@ -47,7 +67,7 @@ contract ProjectToken is StandardToken {
         return indices[addr];
     }
 
-    function setCoinCashRate(uint8 percentOfCoin) public returns (bool) {
+    function setCoinCashRate(uint8 percentOfCoin) public notSuspended returns (bool) {
         require(percentOfCoin >= 0 && percentOfCoin <= 100);
         coinCashRates[msg.sender] = percentOfCoin;
         emit CoinCashRateChanged(msg.sender, percentOfCoin);
@@ -58,7 +78,7 @@ contract ProjectToken is StandardToken {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-    function transfer(address _to, uint256 _value) public returns (bool) {
+    function transfer(address _to, uint256 _value) public notSuspended returns (bool) {
         require(_to != address(0));
         require(_value <= balances[msg.sender]);
 
@@ -79,7 +99,7 @@ contract ProjectToken is StandardToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public notSuspended returns (bool) {
         require(_to != address(0));
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
