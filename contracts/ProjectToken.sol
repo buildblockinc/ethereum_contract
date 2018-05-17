@@ -47,6 +47,12 @@ contract ProjectToken is StandardToken, Ownable {
         _;
     }
 
+  /**
+  * @dev Paying interests in ZIP Coin. 
+          + Generating events with cash values each user needs to receive
+  * @param amountInCoin Total amount of interest in ZIP coin
+  * @param coinPrice To get exact cash value, we need reference coin price for that moment.
+  */
     function payInterestsInToken(uint amountInCoin, uint coinPrice) public suspended {
         require(token.allowance(msg.sender, this) >= amountInCoin);
         uint when = now;
@@ -59,14 +65,26 @@ contract ProjectToken is StandardToken, Ownable {
         }
     }
 
+  /**
+  * @dev Get nth address from the internal array
+  * @param n Index
+  */
     function getNthAddress(uint n) public view returns (address) {
         return addresses[n];
     }
 
+  /**
+  * @dev Get index of given address in the internal array
+  * @param addr Address which we want to know
+  */
     function getIndex(address addr) public view returns (uint) {
         return indices[addr];
     }
 
+  /**
+  * @dev Setting ratio of coin to cash for interest
+  * @param percentOfCoin The ratio of coin to cash for interest
+  */
     function setCoinCashRate(uint8 percentOfCoin) public notSuspended returns (bool) {
         require(percentOfCoin >= 0 && percentOfCoin <= 100);
         coinCashRates[msg.sender] = percentOfCoin;
@@ -74,7 +92,7 @@ contract ProjectToken is StandardToken, Ownable {
     }
 
   /**
-  * @dev transfer token for a specified address
+  * @dev Transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
@@ -93,12 +111,12 @@ contract ProjectToken is StandardToken, Ownable {
         return true;
     }
 
-   /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
+  /**
+  * @dev Transfer tokens from one address to another
+  * @param _from address The address which you want to send tokens from
+  * @param _to address The address which you want to transfer to
+  * @param _value uint256 the amount of tokens to be transferred
+  */
     function transferFrom(address _from, address _to, uint256 _value) public notSuspended returns (bool) {
         require(_to != address(0));
         require(_value <= balances[_from]);
