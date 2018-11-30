@@ -83,29 +83,74 @@ contract ProjectToken is StandardToken, Ownable {
         return true;
     }
 
-    // function tradeMainToProject(address _requester, uint256 _value) public onlyOwner returns (bool success) {
-    //     require(msg.sender == owner);
-    //     // Sell main to coinbase
-    //     token.transferByOwnerRemote(_requester, owner, _value);
-    //     // Receive project in return
-    //     transferByOwner(owner, _requester, _value);
+    // Voting
+    mapping(address => bool) public approvers;
+    Request [] public requests;
 
-    //     return true;
-    // }
+    struct Request{
+        string description;
+        uint value;
+        address recipient;
+        bool complete;
+        uint approvalCount;
+        uint rejectCount;
+        mapping(address => bool) approvals;
+        uint startTime;
+        uint endTime;
+    }
 
-    // function tradeProjectToMain(address _requester, uint256 _value) public onlyOwner returns (bool success) {
-    //     require(msg.sender == owner);
-    //     // Sell project to coinbase
-    //     transferByOwner(_requester, owner, _value);
-    //     // Receive main in return
-    //     token.transferByOwnerRemote(owner, _requester, _value);
+    function createRequest(string description, uint value, address recipient,
+                           uint startTime, uint endTime) public onlyOwner {
+        Request memory newRequest = Request({
+            description: description,
+            value:value,
+            recipient: recipient,
+            complete:false,
+            approvalCount: 0 ,
+            rejectCount: 0,
+            startTime: startTime,
+            endTime: endTime
+        });
+        requests.push(newRequest);
+    }
 
-    //     return true;
-    // }
+    function approveRequest(uint index, bool decision) public {
+        Request storage request = requests[index];
+        require(approvers[msg.sender]);
+        require(!request.approvals[msg.sender]);
 
-    /**
-    * @dev Transfers the current balance to the owner and terminates the contract.
-    */
+        // guard the request period
+        require(now > request.startTime && now < request.endTime);
+
+        request.approvals[msg.sender] = true;
+
+        // currently ppl can vote per their balance
+        if (decision == true)
+            request.approvalCount += balances[msg.sender] ;
+        else
+            request.rejectCount += balances[msg.sender] ;
+    }
+
+    function getAdminApproval(uint index) public onlyOwner {
+
+        Request storage request = requests[index];
+
+        uint totalVoteCount = request.approvalCount + request.rejectCount;
+        uint totalSoldToken = totalSupply_ - balances[owner];
+
+        // admin is going to give approval
+        // for the amount equal to the vote not performed
+        request.approvalCount += (totalSoldToken - totalVoteCount);
+    }
+
+    function finalizeRequest(uint index) public onlyOwner {
+        Request storage request = requests[index];
+        require(request.approvalCount > request.rejectCount );
+        require(!request.complete);
+        request.recipient.transfer(request.value);
+        request.complete = true;
+    }
+
     function destroy() public onlyOwner {
         selfdestruct(owner);
     }
