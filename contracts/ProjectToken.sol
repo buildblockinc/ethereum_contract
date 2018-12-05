@@ -16,6 +16,8 @@ contract ProjectToken is StandardToken, Ownable {
     string public name;
     string public symbol = 'PROJECT_BUILD';
     uint8 public decimals = 2;
+    string facts = '연이율 = 0.12, 투자기간 = 3개월, 모금액 = 55000000, 연체금리 = 0.2, 상환방식 = payment upon maturity of the project';
+    string product_title = '홍대입구역 Airbnb 도시민박업 사업 담보상품-베타';
 
     constructor(address _contractAddress, address _fintech_address, uint INITIAL_SUPPLY, string _name) public {
         owner = msg.sender;
@@ -82,26 +84,6 @@ contract ProjectToken is StandardToken, Ownable {
 
         return true;
     }
-
-    // function tradeMainToProject(address _requester, uint256 _value) public onlyOwner returns (bool success) {
-    //     require(msg.sender == owner);
-    //     // Sell main to coinbase
-    //     token.transferByOwnerRemote(_requester, owner, _value);
-    //     // Receive project in return
-    //     transferByOwner(owner, _requester, _value);
-
-    //     return true;
-    // }
-
-    // function tradeProjectToMain(address _requester, uint256 _value) public onlyOwner returns (bool success) {
-    //     require(msg.sender == owner);
-    //     // Sell project to coinbase
-    //     transferByOwner(_requester, owner, _value);
-    //     // Receive main in return
-    //     token.transferByOwnerRemote(owner, _requester, _value);
-
-    //     return true;
-    // }
 
     /**
     * @dev Transfers the current balance to the owner and terminates the contract.
