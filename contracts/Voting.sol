@@ -1,9 +1,7 @@
 pragma solidity ^0.4.23;
 
-import "../openzeppelin-solidity/contracts/ownership/Ownable.sol";
-
 // Voting contract
-contract VotingContract is Ownable {
+contract VotingContract {
 
     address public owner;
     // Voting
