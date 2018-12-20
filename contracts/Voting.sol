@@ -83,18 +83,19 @@ contract VotingContract {
     }
 
     function getNumberOfVotes(address productContractAddr, uint round) public view returns (uint) {
-        Voting storage votingProduct = votemap[productContractAddr][round];
-        return votingProduct.castedVotes;
+        return votemap[productContractAddr][round].castedVotes;
     }
 
     function getUserVote(address productContractAddr, uint round, address voter) public view returns (int8) {
-        Voting storage votingProduct = votemap[productContractAddr][round];
-        return votingProduct.decisions[voter];
+        return votemap[productContractAddr][round].decisions[voter];
     }
 
     function isComplete(address productContractAddr, uint round) public view returns (bool){
-        Voting storage votingProduct = votemap[productContractAddr][round];
-        return votingProduct.complete;
+        return votemap[productContractAddr][round].complete;
+    }
+
+    function numRounds(address productContractAddr) public view returns (uint){
+        return votemap[productContractAddr].length;
     }
 
 }
