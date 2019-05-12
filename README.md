@@ -1,4 +1,5 @@
-## Z-BSI Smart Contracts
+## Buildblock Smart Contracts
 ## 
-1. Platform coin (ZIP)
-2. Project coin
+1. BuildToken Contract
+2. ProjectToken Contract
+3. Voting Contract
